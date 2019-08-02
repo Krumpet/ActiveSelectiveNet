@@ -7,8 +7,6 @@ from selectivnet_utils import *
 
 MODELS = {"cifar_10": cifar10Selective, "catsdogs": CatsvsDogSelective, "SVHN": SVHNSelective}
 
-
-
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='cifar_10')
 
