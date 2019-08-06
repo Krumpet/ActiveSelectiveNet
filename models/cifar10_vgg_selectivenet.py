@@ -15,6 +15,7 @@ from keras.layers.core import Lambda
 from keras.models import Model
 from keras.models import Sequential
 from keras.preprocessing.image import ImageDataGenerator
+from typing import Tuple
 
 from selectivnet_utils import *
 
@@ -152,7 +153,7 @@ class cifar10vgg:
         self.model_embeding = Model(inputs=input, outputs=curr)
         return model
 
-    def normalize(self, X_train, X_test):
+    def normalize(self, X_train: np.ndarray, X_test: np.ndarray):
         # this function normalize inputs for zero mean and unit variance
         # it is used when training a model.
         # Input: training set and test set
