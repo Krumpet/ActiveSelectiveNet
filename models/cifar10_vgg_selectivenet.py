@@ -20,8 +20,10 @@ from typing import Tuple
 from selectivnet_utils import *
 
 
+
+
 class cifar10vgg:
-    def __init__(self, train=True, filename="weightsvgg.h5", coverage=0.8, alpha=0.5, baseline=False):
+    def __init__(self, train=True, filename="weightsvgg.h5", coverage=0.875, alpha=0.5, baseline=False):
         self.lamda = coverage
         self.alpha = alpha
         self.mc_dropout_rate = K.variable(value=0)
@@ -33,13 +35,13 @@ class cifar10vgg:
         self.filename = filename
 
         self.model = self.build_model()
-        if baseline:
-            self.alpha = 0
-
-        if train:
-            self.model = self.train(self.model)
-        else:
-            self.model.load_weights("checkpoints/{}".format(self.filename))
+        # if baseline:
+        #     self.alpha = 0
+        #
+        # if train:
+        #     self.model = self.train(self.model)
+        # else:
+        #     self.model.load_weights("checkpoints/{}".format(self.filename))
 
     def build_model(self):
         # Build the network of vgg for 10 classes with massive dropout and weight decay as described in the paper.
@@ -211,6 +213,12 @@ class cifar10vgg:
         self.y_train = keras.utils.to_categorical(y_train, self.num_classes + 1)
         self.y_test = keras.utils.to_categorical(y_test_label, self.num_classes + 1)
 
+    def set_train_and_test(self,train_x,train_y,test_x,test_y):
+        self.y_train = train_y
+        self.y_test = test_y
+        self.x_train = train_x
+        self.x_test = test_x
+
     def train(self, model):
         c = self.lamda
         lamda = 32
@@ -274,7 +282,6 @@ class cifar10vgg:
                                           steps_per_epoch=self.x_train.shape[0] // batch_size,
                                           epochs=maxepoches, callbacks=[reduce_lr],
                                           validation_data=(self.x_test, [self.y_test, self.y_test[:, :-1]]))
-
 
         with open("checkpoints/{}_history.pkl".format(self.filename[:-3]), 'wb') as handle:
             pickle.dump(historytemp.history, handle, protocol=pickle.HIGHEST_PROTOCOL)
