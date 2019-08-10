@@ -54,7 +54,7 @@ for i in range(NUMBER_OF_RUNS):
         coverage = 1 - INCREMENT/( x_total.shape[0] - cur_train_size)
 
         # set file name
-        file_name = "{}_{}.h5".format(i, cur_train_size)
+        file_name = "round_{}_trainSize_{}.h5".format(i, cur_train_size)
 
         # create the current net for this round
         cur_net = cifar10Selective(coverage= coverage,filename=file_name)
@@ -63,6 +63,7 @@ for i in range(NUMBER_OF_RUNS):
         x_train, y_train = x_total[cur_train_indexes], y_total[cur_train_indexes]
         cur_test_indexes = all_indexes[np.logical_not(np.isin(all_indexes,cur_train_indexes))]
         x_test, y_test = x_total[cur_test_indexes], y_total[cur_test_indexes]
+        x_train, x_test =  cur_net.normalize(x_train,x_test)
         cur_net.set_train_and_test(train_x=x_train, train_y=y_train, test_x=x_test, test_y= y_test)
 
         # train net with desired train set

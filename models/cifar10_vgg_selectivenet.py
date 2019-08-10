@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import keras
+import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 from keras import backend as K
@@ -282,6 +283,14 @@ class cifar10vgg:
                                           steps_per_epoch=self.x_train.shape[0] // batch_size,
                                           epochs=maxepoches, callbacks=[reduce_lr],
                                           validation_data=(self.x_test, [self.y_test, self.y_test[:, :-1]]))
+        fig, ax = plt.subplots(nrows=1, ncols=1)
+        ax.plot(historytemp.history['classification_head_acc'])
+        ax.plot(historytemp.history['val_classification_head_acc'])
+        ax.title('model accuracy')
+        ax.ylabel('accuracy')
+        ax.xlabel('epoch')
+        ax.legend(['train', 'test'], loc='upper left')
+        fig.savefig("checkpoints/{}_acc_graph.png".format(self.filename[:-3]))
 
         with open("checkpoints/{}_history.pkl".format(self.filename[:-3]), 'wb') as handle:
             pickle.dump(historytemp.history, handle, protocol=pickle.HIGHEST_PROTOCOL)
