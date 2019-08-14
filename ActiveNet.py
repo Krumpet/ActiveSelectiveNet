@@ -55,19 +55,29 @@ for i in range(NUMBER_OF_RUNS):
 
         # set file name
         file_name = "round_{}_trainSize_{}.h5".format(i, cur_train_size)
+        baseline_file_name = "baseline_round_{}_trainSize_{}.h5".format(i, cur_train_size)
 
         # create the current net for this round
         cur_net = cifar10Selective(coverage= coverage,filename=file_name)
+        baseline_net = cifar10Selective(filename=baseline_file_name,baseline=True)
 
         # set the train and test examples
+        x_train_baseline,y_train_baseline = x_total[:cur_train_size], y_total[:cur_train_size]
+        x_test_baseline, y_test_baseline = x_total[cur_train_size:], y_total[cur_train_size:]
+
         x_train, y_train = x_total[cur_train_indexes], y_total[cur_train_indexes]
         cur_test_indexes = all_indexes[np.logical_not(np.isin(all_indexes,cur_train_indexes))]
         x_test, y_test = x_total[cur_test_indexes], y_total[cur_test_indexes]
+
         x_train, x_test =  cur_net.normalize(x_train,x_test)
+        x_train_baseline,x_test_baseline = baseline_net.normalize(x_train_baseline,x_test_baseline)
+
         cur_net.set_train_and_test(train_x=x_train, train_y=y_train, test_x=x_test, test_y= y_test)
+        baseline_net.set_train_and_test(x_train_baseline,y_train_baseline,x_test_baseline, y_test_baseline)
 
         # train net with desired train set
         cur_net.train(cur_net.model)
+        baseline_net.train(baseline_net.model)
 
         # predict on the rest of the examples
         y_pred, __ = cur_net.predict()
