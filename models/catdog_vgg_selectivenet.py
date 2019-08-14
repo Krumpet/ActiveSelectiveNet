@@ -171,7 +171,7 @@ class CatsvsDogVgg:
             x = self.x_test
         return self.model_embeding.predict(x, batch_size)
 
-    def mc_dropout(self, batch_size=1000, dropout=0.5, iter=100):
+    def         mc_dropout(self, batch_size=1000, dropout=0.5, iter=100):
         K.set_value(self.mc_dropout_rate, dropout)
         repititions = []
         for i in range(iter):

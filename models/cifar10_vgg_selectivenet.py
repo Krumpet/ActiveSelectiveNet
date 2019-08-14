@@ -17,6 +17,7 @@ from keras.models import Model
 from keras.models import Sequential
 from keras.preprocessing.image import ImageDataGenerator
 from typing import Tuple
+import scipy.io as sio
 
 from selectivnet_utils import *
 
@@ -283,14 +284,16 @@ class cifar10vgg:
                                           steps_per_epoch=self.x_train.shape[0] // batch_size,
                                           epochs=maxepoches, callbacks=[reduce_lr],
                                           validation_data=(self.x_test, [self.y_test, self.y_test[:, :-1]]))
-        fig, ax = plt.subplots(nrows=1, ncols=1)
-        ax.plot(historytemp.history['classification_head_acc'])
-        ax.plot(historytemp.history['val_classification_head_acc'])
-        ax.title('model accuracy')
-        ax.ylabel('accuracy')
-        ax.xlabel('epoch')
-        ax.legend(['train', 'test'], loc='upper left')
-        fig.savefig("checkpoints/{}_acc_graph.png".format(self.filename[:-3]))
+        sio.savemat('result_{}.mat'.format(self.filename[:-3]), {'classification_loss_training': historytemp.history['classification_head_acc'],
+                                         'classification_loss_val':historytemp.history['val_classification_head_acc']})
+        # fig, ax = plt.subplots(nrows=1, ncols=1)
+        # ax.plot(historytemp.history['classification_head_acc'])
+        # ax.plot(historytemp.history['val_classification_head_acc'])
+        # ax.title('model accuracy')
+        # ax.ylabel('accuracy')
+        # ax.xlabel('epoch')
+        # ax.legend(['train', 'test'], loc='upper left')
+        # fig.savefig("checkpoints/{}_acc_graph.png".format(self.filename[:-3]))
 
         with open("checkpoints/{}_history.pkl".format(self.filename[:-3]), 'wb') as handle:
             pickle.dump(historytemp.history, handle, protocol=pickle.HIGHEST_PROTOCOL)
