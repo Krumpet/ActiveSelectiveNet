@@ -51,8 +51,7 @@ class cifar10vgg:
         weight_decay = self.weight_decay
         basic_dropout_rate = 0.3
         input = Input(shape=self.x_shape)
-        # if self.autoencoder_func is not None:
-        #     encoderOutput = self.autoencoder_func(input)
+
         curr = Conv2D(64, (3, 3), padding='same', kernel_regularizer=regularizers.l2(weight_decay))(input)
         curr = Activation('relu')(curr)
         curr = BatchNormalization()(curr)
@@ -142,31 +141,26 @@ class cifar10vgg:
         # classification head (f)
         curr1 = Dense(self.num_classes, activation='softmax')(curr)
 
-        # selection head (g)
         curr2 = Dense(512, kernel_regularizer=regularizers.l2(weight_decay))(curr)
         curr2 = Activation('relu')(curr2)
         curr2 = BatchNormalization()(curr2)
         # this normalization is identical to initialization of batchnorm gamma to 1/10
         curr2 = Lambda(lambda x: x / 10)(curr2)
         curr2 = Dense(1, activation='sigmoid')(curr2)
-        # auxiliary head (h)
-        if self.autoencoder_type is not None:
-            # build an autoencoder which takes the same input
-            autoencoder_output_layer = autoencoder_dict[self.autoencoder_type](input).out
-        else:
-            autoencoder_output_layer = None
 
+        # autoencoder head (ae)
+        autoencoder_output_layer = autoencoder_dict[self.autoencoder_type](input).out
+
+        # selection head (g)
         selective_output = Concatenate(axis=1, name="selective_head")([curr1, curr2])
 
+        # auxiliary head (h)
         auxiliary_output = Dense(self.num_classes, activation='softmax', name="classification_head")(curr)
 
-        if self.autoencoder_type is not None:
-            model = Model(inputs=input, outputs=[selective_output, auxiliary_output, autoencoder_output_layer])
-        else:
-            model = Model(inputs=input, outputs=[selective_output, auxiliary_output])
+        # output is ((f,g), h, ae), output shape is [(,11), (,10), (, 32, 32, 3)]
+        model = Model(inputs=input, outputs=[selective_output, auxiliary_output, autoencoder_output_layer])
 
         self.input = input
-        # self.model_autoencoder = autoencoder if self.autoencoder_type is not None else None
         self.model_embeding = Model(inputs=input, outputs=curr)
         return model
 
@@ -174,7 +168,7 @@ class cifar10vgg:
         # this function normalize inputs for zero mean and unit variance
         # it is used when training a model.
         # Input: training set and test set
-        # Output: normalized training set and test set according to the trianing set statistics.
+        # Output: normalized training set and test set according to the training set statistics.
         mean = np.mean(X_train, axis=(0, 1, 2, 3))
         std = np.std(X_train, axis=(0, 1, 2, 3))
         X_train = (X_train - mean) / (std + 1e-7)
@@ -240,8 +234,7 @@ class cifar10vgg:
     def set_train_and_test(self, train_x, train_y, test_x, test_y):
         self.y_train = train_y
         self.y_test = test_y
-        self.x_train = train_x
-        self.x_test = test_x
+        self.x_train, self.x_test = self.normalize(train_x, test_x)
 
     def train(self, model):
         c = self.lamda
@@ -306,17 +299,18 @@ class cifar10vgg:
         metrics = {
             "selective_head": [selective_acc, 'accuracy', coverage],
             "classification_head": [selective_acc, 'accuracy', coverage],
-            "decoder_output": 'mean_squared_error' # accuracy is the same as loss for tracking progress
+            "decoder_output": 'mean_squared_error'  # accuracy is the same as loss for tracking progress
         }
 
-        model.compile(loss=losses, loss_weights=[self.alpha*2/3, (1 - self.alpha)*2/3, 1/3],
+        model.compile(loss=losses, loss_weights=[self.alpha * 2 / 3, (1 - self.alpha) * 2 / 3, 1 / 3],
                       optimizer=sgd, metrics=metrics)
 
         historytemp = model.fit_generator(my_dual_generator(datagen.flow, self.x_train, self.y_train,
-                                                       batch_size=batch_size),
+                                                            batch_size=batch_size),
                                           steps_per_epoch=self.x_train.shape[0] // batch_size,
                                           epochs=maxepoches, callbacks=[reduce_lr],
-                                          validation_data=(self.x_test, [self.y_test, self.y_test[:, :-1], self.x_test]))
+                                          validation_data=(
+                                          self.x_test, [self.y_test, self.y_test[:, :-1], self.x_test]))
         sio.savemat('result_autoencoder_{}.mat'.format(self.filename[:-3]),
                     {'classification_loss_training': historytemp.history['classification_head_acc'],
                      'classification_loss_val': historytemp.history['val_classification_head_acc']})
