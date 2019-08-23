@@ -89,6 +89,12 @@ def my_generator(func, x_train, y_train, batch_size, k=10):
                    ).next()
         yield [res[0], [res[1], res[1][:, :-1]]]
 
+def my_dual_generator(func, x_train, y_train, batch_size):
+    while True:
+        res = func(x_train, y_train, batch_size
+                   ).next()
+        yield [res[0], [res[1], res[1][:, :-1], res[0]]]
+
 
 def create_cats_vs_dogs_npz(cats_vs_dogs_path='datasets'):
     labels = ['cat', 'dog']
