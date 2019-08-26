@@ -67,7 +67,7 @@ for i in range(NUMBER_OF_RUNS):
 
         scores = baseline_net.model.evaluate(normalize_x_test, [original_y_test, original_y_test[:, :-1]], 128)
         metrics_names = baseline_net.model.metrics_names
-        sio.savemat('test_result_{}.mat'.format(baseline_file_name[:-3]), {'metrics_names': metrics_names,
+        sio.savemat('test_result/test_result_{}.mat'.format(baseline_file_name[:-3]), {'metrics_names': metrics_names,
                                                                            'scores': scores})
 
         # get increment size of examples indices with lowest confidence and add them to the train indices
