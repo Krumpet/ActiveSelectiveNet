@@ -68,7 +68,6 @@ for encoder in ["shallow", "deep"]:
 
             # set file name
             file_name = "round_{}_trainSize_{}_{}.h5".format(i, cur_train_size, encoder)
-            baseline_file_name = "baseline_round_{}_trainSize_{}_{}.h5".format(i, cur_train_size, encoder)
 
             # create the current net for this round
             cur_net = cifar10Selective(coverage=coverage, filename=file_name, autoencoder=encoder)
