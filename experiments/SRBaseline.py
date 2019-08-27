@@ -1,5 +1,4 @@
 import argparse
-
 from models.cifar10_vgg_selectivenet import cifar10vgg as cifar10Selective
 from sklearn.utils import shuffle
 from selectivnet_utils import *
@@ -79,4 +78,3 @@ for i in range(NUMBER_OF_RUNS):
         cur_train_indexes = np.concatenate((cur_train_indexes, index_add_to_train))
         # get increment size of examples indices with lowest confidence and add them to the train indices
 
-        cur_train_size += INCREMENT

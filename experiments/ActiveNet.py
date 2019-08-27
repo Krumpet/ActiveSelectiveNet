@@ -6,6 +6,7 @@ from models.svhn_vgg_selectivenet import SvhnVgg as SVHNSelective
 from sklearn.utils import shuffle
 from selectivnet_utils import *
 import matplotlib.pyplot as plt
+import scipy.io as sio
 
 NUMBER_OF_RUNS = 5
 INCREMENT = 5000
@@ -35,6 +36,7 @@ original_x_train, original_y_train = net.x_train, net.y_train
 original_x_test, original_y_test = net.x_test, net.y_test
 x_total = np.concatenate((original_x_train, original_x_test), axis=0)
 y_total = np.concatenate((original_y_train, original_y_test), axis=0)
+_, normalize_x_test = net.normalize(original_x_train, original_x_test)
 
 # run several times to get more accurate result
 for i in range(NUMBER_OF_RUNS):
@@ -67,6 +69,12 @@ for i in range(NUMBER_OF_RUNS):
 
         # train net with desired train set
         cur_net.train(cur_net.model)
+
+        # check performance on separate test
+        scores = cur_net.model.evaluate(normalize_x_test, [original_y_test, original_y_test[:, :-1]], 128)
+        metrics_names = cur_net.model.metrics_names
+        sio.savemat('test_result/test_result_{}.mat'.format(file_name[:-3]), {'metrics_names': metrics_names,
+                                                                                       'scores': scores})
 
         # predict on the rest of the examples
         y_pred, __ = cur_net.predict()
