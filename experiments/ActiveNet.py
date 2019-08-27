@@ -34,8 +34,8 @@ net = cifar10Selective()
 # get all data and merge between the test and train
 original_x_train, original_y_train = net.x_train, net.y_train
 original_x_test, original_y_test = net.x_test, net.y_test
-x_total = np.concatenate((original_x_train, original_x_test), axis=0)
-y_total = np.concatenate((original_y_train, original_y_test), axis=0)
+x_total = np.copy(original_x_train)
+y_total = np.copy(original_y_train)
 _, normalize_x_test = net.normalize(original_x_train, original_x_test)
 
 # run several times to get more accurate result
