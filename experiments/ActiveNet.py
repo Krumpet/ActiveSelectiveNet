@@ -7,6 +7,10 @@ from sklearn.utils import shuffle
 from selectivnet_utils import *
 import matplotlib.pyplot as plt
 import scipy.io as sio
+import numpy as np
+import tensorflow as tf
+np.random.seed(1234)
+tf.set_random_seed(1234)
 
 NUMBER_OF_RUNS = 5
 INCREMENT = 5000
@@ -49,7 +53,7 @@ for i in range(NUMBER_OF_RUNS):
     all_indexes = np.arange(x_total.shape[0])
 
     # starting loop of the increment of train data by confidence level
-    while cur_train_size <= x_total.shape[0] - original_x_test.shape[0]:
+    while cur_train_size + INCREMENT <= x_total.shape[0]:
         # tuning coverage to the amount of increment train size
         coverage = 1 - INCREMENT / (x_total.shape[0] - cur_train_size)
 
