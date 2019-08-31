@@ -23,9 +23,7 @@ from selectivnet_utils import *
 
 
 class cifar10vgg:
-    def __init__(self, train=True, filename="weightsvgg.h5", coverage=0.875, alpha=0.5, baseline=False,
-                 autoencoder=None
-                 ):
+    def __init__(self, autoencoder, train=True, filename="weightsvgg.h5", coverage=0.875, alpha=0.5, baseline=False):
         self.lamda = coverage
         self.alpha = alpha
         self.mc_dropout_rate = K.variable(value=0)
@@ -310,7 +308,7 @@ class cifar10vgg:
                                           steps_per_epoch=self.x_train.shape[0] // batch_size,
                                           epochs=maxepoches, callbacks=[reduce_lr],
                                           validation_data=(
-                                          self.x_test, [self.y_test, self.y_test[:, :-1], self.x_test]))
+                                              self.x_test, [self.y_test, self.y_test[:, :-1], self.x_test]))
         sio.savemat('result_autoencoder_{}.mat'.format(self.filename[:-3]),
                     {'classification_loss_training': historytemp.history['classification_head_acc'],
                      'classification_loss_val': historytemp.history['val_classification_head_acc']})
