@@ -64,7 +64,6 @@ for encoder in ["shallow", "deep"]:
         confidence_weight_shift = (INITIAL_ENCODER_WEIGHT - FINAL_ENCODER_WEIGHT) / (number_of_iterations - 1)
         iteration_number = 0
         # starting loop of the increment of train data by confidence level
-        # TODO: testing new iteration method
         while cur_train_size + INCREMENT <= x_total.shape[0]:
         # while cur_train_size <= original_x_train.shape[0]:
             # tuning coverage to the amount of increment train size
@@ -85,7 +84,7 @@ for encoder in ["shallow", "deep"]:
             cur_net.train(cur_net.model)
 
             # predict on the rest of the examples
-            y_pred, __, encoder_res = cur_net.predict(x=x_train[indices_not_trained_on])
+            y_pred, __, encoder_res = cur_net.predict()
 
             cur_train_size += INCREMENT
             # get increment size of examples indices with lowest confidence and add them to the train indices

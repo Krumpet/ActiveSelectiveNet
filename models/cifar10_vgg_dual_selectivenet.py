@@ -257,7 +257,7 @@ class cifar10vgg:
 
         # training parameters
         batch_size = 128
-        # TODO: set back to 300
+
         maxepoches = 300
         learning_rate = 0.1
 
@@ -321,9 +321,9 @@ class cifar10vgg:
         # ax.legend(['train', 'test'], loc='upper left')
         # fig.savefig("checkpoints/{}_acc_graph.png".format(self.filename[:-3]))
 
-        with open("checkpoints_autoencoder/{}_history.pkl".format(self.filename[:-3]), 'wb') as handle:
+        with open(os.path.abspath("../checkpoints_autoencoder/{}_history.pkl".format(self.filename[:-3])), 'wb') as handle:
             pickle.dump(historytemp.history, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-        model.save_weights("checkpoints_autoencoder/{}".format(self.filename))
+        model.save_weights("../checkpoints_autoencoder/{}".format(self.filename))
 
         return model
