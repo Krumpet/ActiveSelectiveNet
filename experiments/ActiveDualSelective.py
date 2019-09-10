@@ -5,6 +5,7 @@ import tensorflow as tf
 from sklearn.utils import shuffle
 
 from models.cifar10_vgg_dual_selectivenet import cifar10vgg as cifar10Selective
+
 np.random.seed(1234)
 tf.set_random_seed(1234)
 
@@ -36,7 +37,7 @@ def get_dual_confidence_by_step(y_confidence, x_train, autoencoded_images, step,
     autoencoder_confidence = normalize_as_confidence(mse(x_train, autoencoded_images))
     weight_shift = confidence_weight_step_size * step
     conf_weight, encoder_weight = 1 - INITIAL_ENCODER_WEIGHT + weight_shift, INITIAL_ENCODER_WEIGHT - weight_shift
-    print('for step', step+1, 'conf_weight', conf_weight, 'encoder_weight', encoder_weight)
+    print('for step', step + 1, 'conf_weight', conf_weight, 'encoder_weight', encoder_weight)
     return conf_weight * y_confidence + encoder_weight * autoencoder_confidence
 
 
@@ -59,13 +60,16 @@ for encoder in ["shallow", "deep"]:
         all_indexes = np.arange(x_total.shape[0])
 
         # how many times will we train while increasing the training set size after each time
-        number_of_iterations = math.floor(((original_x_train.shape[0] - cur_train_size) / INCREMENT) + 1)
+        # number_of_iterations = math.floor(((original_x_train.shape[0] - cur_train_size) / INCREMENT) + 1)
+        number_of_iterations = math.ceil(((original_x_train.shape[0] - cur_train_size) / INCREMENT))
         # how much to shift weights in favor of selectiveNet confidence with each step
         confidence_weight_shift = (INITIAL_ENCODER_WEIGHT - FINAL_ENCODER_WEIGHT) / (number_of_iterations - 1)
+        print('starting with', cur_train_size, 'adding', INCREMENT, 'each time, up to', x_total.shape[0],
+              'estimating', number_of_iterations, 'steps, so weight shift is ', confidence_weight_shift, 'per step')
         iteration_number = 0
         # starting loop of the increment of train data by confidence level
-        while cur_train_size + INCREMENT <= x_total.shape[0]:
-        # while cur_train_size <= original_x_train.shape[0]:
+        while cur_train_size < x_total.shape[0]:
+            # while cur_train_size <= original_x_train.shape[0]:
             # tuning coverage to the amount of increment train size
             coverage = 1 - INCREMENT / (x_total.shape[0] - cur_train_size)
 
@@ -76,9 +80,12 @@ for encoder in ["shallow", "deep"]:
             cur_net = cifar10Selective(coverage=coverage, filename=file_name, autoencoder=encoder)
 
             x_train, y_train = x_total[cur_train_indexes], y_total[cur_train_indexes]
-            indices_not_trained_on = all_indexes[np.logical_not(np.isin(all_indexes, cur_train_indexes))]
+            cur_test_indexes = all_indexes[np.logical_not(np.isin(all_indexes, cur_train_indexes))]
+            x_test, y_test = x_total[cur_test_indexes], y_total[cur_test_indexes]
 
-            cur_net.set_train_and_test(train_x=x_train, train_y=y_train, test_x=original_x_test, test_y=original_y_test)
+            x_train, x_test = cur_net.normalize(x_train, x_test)
+
+            cur_net.set_train_and_test(train_x=x_train, train_y=y_train, test_x=x_test, test_y=y_test)
 
             # train net with desired train set
             cur_net.train(cur_net.model)
@@ -89,8 +96,9 @@ for encoder in ["shallow", "deep"]:
             cur_train_size += INCREMENT
             # get increment size of examples indices with lowest confidence and add them to the train indices
             y_confidence = y_pred[:, -1]
-            dual_confidence = get_dual_confidence_by_step(y_confidence, cur_net.x_test, encoder_res, iteration_number, confidence_weight_shift)
+            dual_confidence = get_dual_confidence_by_step(y_confidence, cur_net.x_test, encoder_res, iteration_number,
+                                                          confidence_weight_shift)
             sorted_ind = np.argsort(dual_confidence)
-            index_add_to_train = indices_not_trained_on[sorted_ind[:INCREMENT]]
+            index_add_to_train = cur_test_indexes[sorted_ind[:INCREMENT]]
             cur_train_indexes = np.concatenate((cur_train_indexes, index_add_to_train))
-            iteration_number+=1
+            iteration_number += 1
