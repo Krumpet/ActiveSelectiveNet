@@ -1,37 +1,16 @@
-import argparse
-
-from models.catdog_vgg_selectivenet import CatsvsDogVgg as CatsvsDogSelective
-from models.cifar10_vgg_selectivenet import cifar10vgg as cifar10Selective
-from models.svhn_vgg_selectivenet import SvhnVgg as SVHNSelective
-from sklearn.utils import shuffle
-from selectivnet_utils import *
-import matplotlib.pyplot as plt
-import scipy.io as sio
 import numpy as np
+import scipy.io as sio
 import tensorflow as tf
+from sklearn.utils import shuffle
+
+from models.cifar10_vgg_selectivenet import cifar10vgg as cifar10Selective
+
 np.random.seed(1234)
 tf.set_random_seed(1234)
 
 NUMBER_OF_RUNS = 5
 INCREMENT = 5000
 INITIAL_TRAINING_SIZE = 10000
-
-MODELS = {"cifar_10": cifar10Selective, "catsdogs": CatsvsDogSelective, "SVHN": SVHNSelective}
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='cifar_10')
-
-parser.add_argument('--model_name', type=str, default='test')
-parser.add_argument('--baseline', type=str, default='none')
-parser.add_argument('--alpha', type=float, default=0.5)
-
-args = parser.parse_args()
-
-model_cls = MODELS[args.dataset]
-model_name = args.model_name
-baseline_name = args.baseline
-
-from sklearn.model_selection import train_test_split
 
 # init net for data usage, this net will not be trained or tested
 net = cifar10Selective()

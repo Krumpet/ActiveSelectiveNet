@@ -1,6 +1,7 @@
 import math
 
 import numpy as np
+import scipy.io as sio
 import tensorflow as tf
 from sklearn.utils import shuffle
 
@@ -46,13 +47,16 @@ net = cifar10Selective("shallow")
 # get all data and merge between the test and train
 original_x_train, original_y_train = net.x_train, net.y_train
 original_x_test, original_y_test = net.x_test, net.y_test
+x_total = np.copy(original_x_train)
+y_total = np.copy(original_y_train)
+_, normalize_x_test = net.normalize(original_x_train, original_x_test)
 
 # run with shallow or deep autoencoder:
 for encoder in ["shallow", "deep"]:
     # run several times to get more accurate result
     for i in range(NUMBER_OF_RUNS):
         # shuffle each time we run test
-        x_total, y_total = shuffle(original_x_train, original_y_train)
+        x_total, y_total = shuffle(x_total, y_total)
 
         # init the train indices and size
         cur_train_size = INITIAL_TRAINING_SIZE
@@ -69,16 +73,15 @@ for encoder in ["shallow", "deep"]:
         iteration_number = 0
         # starting loop of the increment of train data by confidence level
         while cur_train_size < x_total.shape[0]:
-            # while cur_train_size <= original_x_train.shape[0]:
             # tuning coverage to the amount of increment train size
             coverage = 1 - INCREMENT / (x_total.shape[0] - cur_train_size)
 
             # set file name
             file_name = "round_{}_trainSize_{}_{}.h5".format(i, cur_train_size, encoder)
-
             # create the current net for this round
             cur_net = cifar10Selective(coverage=coverage, filename=file_name, autoencoder=encoder)
 
+            # set the train and test examples
             x_train, y_train = x_total[cur_train_indexes], y_total[cur_train_indexes]
             cur_test_indexes = all_indexes[np.logical_not(np.isin(all_indexes, cur_train_indexes))]
             x_test, y_test = x_total[cur_test_indexes], y_total[cur_test_indexes]
@@ -90,12 +93,18 @@ for encoder in ["shallow", "deep"]:
             # train net with desired train set
             cur_net.train(cur_net.model)
 
+            # check performance on separate test
+            scores = cur_net.model.evaluate(normalize_x_test, [original_y_test, original_y_test[:, :-1]], 128)
+            metrics_names = cur_net.model.metrics_names
+            sio.savemat('test_result/test_result_dual_{}_{}.mat'.format(file_name[:-3], encoder), {'metrics_names': metrics_names,
+                                                                                  'scores': scores})
+
             # predict on the rest of the examples
             y_pred, __, encoder_res = cur_net.predict()
 
-            cur_train_size += INCREMENT
             # get increment size of examples indices with lowest confidence and add them to the train indices
             y_confidence = y_pred[:, -1]
+            cur_train_size += INCREMENT
             dual_confidence = get_dual_confidence_by_step(y_confidence, cur_net.x_test, encoder_res, iteration_number,
                                                           confidence_weight_shift)
             sorted_ind = np.argsort(dual_confidence)
