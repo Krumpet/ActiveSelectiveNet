@@ -94,9 +94,9 @@ for encoder in ["shallow", "deep"]:
             cur_net.train(cur_net.model)
 
             # check performance on separate test
-            scores = cur_net.model.evaluate(normalize_x_test, [original_y_test, original_y_test[:, :-1]], 128)
+            scores = cur_net.model.evaluate(normalize_x_test, [original_y_test, original_y_test[:, :-1], np.copy(normalize_x_test)], 128)
             metrics_names = cur_net.model.metrics_names
-            sio.savemat('test_result/test_result_dual_{}_{}.mat'.format(file_name[:-3], encoder), {'metrics_names': metrics_names,
+            sio.savemat('../test_result/test_result_dual_{}.mat'.format(file_name[:-3]), {'metrics_names': metrics_names,
                                                                                   'scores': scores})
 
             # predict on the rest of the examples
